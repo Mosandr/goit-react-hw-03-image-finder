@@ -1,4 +1,5 @@
 import { Component } from "react";
+import shortid from "shortid";
 import Searchbar from "./components/Searchbar";
 import ImageGallery from "./components/ImageGallery";
 import Modal from "./components/Modal";
@@ -12,31 +13,52 @@ class App extends Component {
     page: 1,
     showModal: false,
     activeImgId: "",
+    error: "",
   };
 
-  componentDidUpdate(prevProps, prevState) {
+  async componentDidUpdate(prevProps, prevState) {
     const { searchQuery, page } = this.state;
     const prevQuery = prevState.searchQuery;
     const prevPage = prevState.page;
 
     if (page !== prevPage) {
-      api
+      const height = document.documentElement.scrollHeight - 150;
+
+      await api
         .fetchImages(searchQuery, page, 12)
         .then((data) => {
+          const imageList = this.mapDataForState(data);
+          const errorMessage = imageList.length < 1 ? "No more images :(" : "";
           this.setState(({ images }) => {
-            return { images: [...images, ...data] };
+            return { images: [...images, ...imageList], error: errorMessage };
           });
         })
-        .catch((error) => console.log(error));
+        .catch((error) => {
+          this.setState({ error: "Oops! Something went wrong..." });
+        });
+
+      window.scrollTo({
+        top: height,
+        behavior: "smooth",
+      });
     }
 
-    if (searchQuery !== prevQuery) {
-      api
-        .fetchImages(searchQuery, page, 12)
+    if (searchQuery.toLowerCase() !== prevQuery.toLowerCase()) {
+      await api
+        .fetchImages(searchQuery, 1, 12)
         .then((data) => {
-          this.setState({ images: data });
+          const imageList = this.mapDataForState(data);
+          const errorMessage = imageList.length < 1 ? "No matches found:(" : "";
+          this.setState({ images: imageList, error: errorMessage });
         })
-        .catch((error) => console.log(error));
+        .catch((error) => {
+          this.setState({ error: "Oops! Something went wrong..." });
+        });
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
     }
   }
 
@@ -56,25 +78,45 @@ class App extends Component {
     this.setState({ activeImgId: id, showModal: true });
   };
 
+  handleLoadMore = () => {
+    this.setState(({ page }) => {
+      return { page: page + 1 };
+    });
+  };
+
   findImageById = (id) => {
     if (!id) return null;
-    const image = this.state.images.find((image) => image.id === Number(id));
+    const image = this.state.images.find((image) => image.id === id);
     return image;
   };
 
+  // set unique id for each image object to except APIserver issue - repeating images with same id
+  mapDataForState = (data) => {
+    return data.map((image) => {
+      return {
+        id: shortid.generate(),
+        webformatURL: image.webformatURL,
+        largeImageURL: image.largeImageURL,
+        tags: image.tags,
+      };
+    });
+  };
+
   render() {
-    const { images, showModal, activeImgId } = this.state;
+    const { images, showModal, activeImgId, error } = this.state;
     const activeImage = this.findImageById(activeImgId);
 
     return (
       <div className="App">
         <Searchbar onSubmit={this.onSearchSubmit} />
         <ImageGallery data={images} onImgClick={this.onGalleryImgClick} />
-        <Button text="Load More" />
+        {images.length > 0 && !error && (
+          <Button text="Load More" onClick={this.handleLoadMore} />
+        )}
         {showModal && activeImage && (
           <Modal
             src={activeImage.largeImageURL}
-            alt={activeImage.description}
+            alt={activeImage.tags}
             onClose={this.toggleModal}
           />
         )}

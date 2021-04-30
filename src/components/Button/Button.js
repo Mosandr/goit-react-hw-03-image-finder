@@ -2,9 +2,9 @@ import { Component } from "react";
 
 class Button extends Component {
   render() {
-    const { text } = this.props;
+    const { text, onClick } = this.props;
     return (
-      <button className="Button" type="button">
+      <button className="Button" type="button" onClick={onClick}>
         {text}
       </button>
     );

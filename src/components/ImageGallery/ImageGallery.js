@@ -4,14 +4,14 @@ import ImageGalleryItem from "../ImageGalleryItem";
 const ImageGallery = ({ data, onImgClick }) => {
   return (
     <ul className="ImageGallery">
-      {data.map(({ id, webformatURL, description }) => {
+      {data.map(({ id, webformatURL, tags }) => {
         return (
           <ImageGalleryItem
             onImgClick={onImgClick}
             key={id}
             id={id}
             webformatURL={webformatURL}
-            description={description}
+            description={tags}
           />
         );
       })}
