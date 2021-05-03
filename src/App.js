@@ -4,6 +4,8 @@ import Searchbar from "./components/Searchbar";
 import ImageGallery from "./components/ImageGallery";
 import Modal from "./components/Modal";
 import Button from ".//components/Button";
+import Loader from "./components/Loader";
+import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import api from "./utils/apiService";
 
 class App extends Component {
@@ -14,17 +16,19 @@ class App extends Component {
     showModal: false,
     activeImgId: "",
     error: "",
+    isLoading: false,
   };
 
-  async componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps, prevState) {
     const { searchQuery, page } = this.state;
     const prevQuery = prevState.searchQuery;
     const prevPage = prevState.page;
 
     if (page !== prevPage) {
       const height = document.documentElement.scrollHeight - 150;
+      this.setState({ isLoading: true });
 
-      await api
+      api
         .fetchImages(searchQuery, page, 12)
         .then((data) => {
           const imageList = this.mapDataForState(data);
@@ -35,16 +39,20 @@ class App extends Component {
         })
         .catch((error) => {
           this.setState({ error: "Oops! Something went wrong..." });
+        })
+        .finally(() => {
+          this.setState({ isLoading: false });
+          window.scrollTo({
+            top: height,
+            behavior: "smooth",
+          });
         });
-
-      window.scrollTo({
-        top: height,
-        behavior: "smooth",
-      });
     }
 
     if (searchQuery.toLowerCase() !== prevQuery.toLowerCase()) {
-      await api
+      this.setState({ images: [], isLoading: true });
+
+      api
         .fetchImages(searchQuery, 1, 12)
         .then((data) => {
           const imageList = this.mapDataForState(data);
@@ -53,12 +61,14 @@ class App extends Component {
         })
         .catch((error) => {
           this.setState({ error: "Oops! Something went wrong..." });
+        })
+        .finally(() => {
+          this.setState({ isLoading: false });
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+          });
         });
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
     }
   }
 
@@ -103,16 +113,18 @@ class App extends Component {
   };
 
   render() {
-    const { images, showModal, activeImgId, error } = this.state;
+    const { images, showModal, activeImgId, error, isLoading } = this.state;
     const activeImage = this.findImageById(activeImgId);
 
     return (
       <div className="App">
         <Searchbar onSubmit={this.onSearchSubmit} />
         <ImageGallery data={images} onImgClick={this.onGalleryImgClick} />
-        {images.length > 0 && !error && (
+        {isLoading && <Loader />}
+        {images.length > 0 && !error && !isLoading && (
           <Button text="Load More" onClick={this.handleLoadMore} />
         )}
+
         {showModal && activeImage && (
           <Modal
             src={activeImage.largeImageURL}

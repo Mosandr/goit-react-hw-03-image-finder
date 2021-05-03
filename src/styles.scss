@@ -76,7 +76,7 @@ img {
   width: 48px;
   height: 48px;
   border: 0;
-  background-image: url("https://image.flaticon.com/icons/svg/149/149852.svg");
+  background-image: url("./search.svg");
   background-size: 40%;
   background-repeat: no-repeat;
   background-position: center;
@@ -207,4 +207,7 @@ img {
   background-color: #303f9f;
 }
 
-@import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
+.Loader {
+  display: flex;
+  justify-content: center;
+}
