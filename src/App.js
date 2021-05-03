@@ -5,6 +5,7 @@ import ImageGallery from "./components/ImageGallery";
 import Modal from "./components/Modal";
 import Button from ".//components/Button";
 import Loader from "./components/Loader";
+import Notification from "./components/Notification";
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import api from "./utils/apiService";
 
@@ -132,6 +133,7 @@ class App extends Component {
             onClose={this.toggleModal}
           />
         )}
+        {error && <Notification text={error} type="error" />}
       </div>
     );
   }
